@@ -36,19 +36,11 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  ap:
-    ssid: "EE02 Fallback"
-
-captive_portal:
 
 external_components:
-  # For published use, pin to a commit:
-  #   - source: github://YOUR_USERNAME/esphome-seeed-ee02@COMMIT_SHA
-  #     components: [ ee02_epaper ]
-  - source:
-      type: local
-      path: components
+  - source: github://rkaramandi/esphome-seeed-ee02@main
     components: [ ee02_epaper ]
+    refresh: 1d
 
 spi:
   clk_pin: GPIO7
@@ -95,4 +87,19 @@ binary_sensor:
     pin: { number: GPIO2, mode: { input: true, pullup: true }, inverted: true }
     on_press:
       then:
-        - component.update: epd
+        - component.update: epd            # redraw the current lambda
+ 
+  - platform: gpio
+    name: "EE02 Button 2"
+    pin: { number: GPIO3, mode: { input: true, pullup: true }, inverted: true }
+    on_press:
+      then:
+        - lambda: 'id(epd).show_next_solid();'   # cycle full-screen colour codes
+ 
+  - platform: gpio
+    name: "EE02 Button 3"
+    pin: { number: GPIO5, mode: { input: true, pullup: true }, inverted: true }
+    on_press:
+      then:
+        - lambda: 'id(epd).show_nibble_test();'  # paint the 0..7 nibble strips
+ 

@@ -77,7 +77,7 @@ Add as an external component, pinned to a commit for reproducibility:
 
 ```yaml
 external_components:
-  - source: github://YOUR_USERNAME/esphome-seeed-ee02@COMMIT_SHA
+  - source: github://rkaramandi/esphome-seeed-ee02@COMMIT_SHA
     components: [ ee02_epaper ]
 ```
 
