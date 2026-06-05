@@ -1,0 +1,98 @@
+# Example configuration for the Seeed EE02 + 13.3" Spectra 6 panel.
+# Copy, fill in your secrets, and adjust the lambda to taste.
+
+esphome:
+  name: ee02-frame
+  friendly_name: EE02 ePaper Frame
+  on_boot:
+    priority: -100
+    then:
+      - wait_until:
+          condition: wifi.connected
+          timeout: 30s
+      - delay: 1s
+      - component.update: epd
+
+esp32:
+  board: seeed_xiao_esp32s3
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG   # GPIO43 is the panel power pin; log over USB
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "EE02 Fallback"
+
+captive_portal:
+
+external_components:
+  # For published use, pin to a commit:
+  #   - source: github://YOUR_USERNAME/esphome-seeed-ee02@COMMIT_SHA
+  #     components: [ ee02_epaper ]
+  - source:
+      type: local
+      path: components
+    components: [ ee02_epaper ]
+
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+
+font:
+  - file: "gfonts://Inter@700"
+    id: font_big
+    size: 96
+  - file: "gfonts://Inter@500"
+    id: font_med
+    size: 48
+
+display:
+  - platform: ee02_epaper
+    id: epd
+    cs_master_pin: GPIO44
+    cs_slave_pin: GPIO41
+    dc_pin: GPIO10
+    busy_pin: GPIO4
+    reset_pin: GPIO38
+    power_pin: GPIO43
+    rotation: 90            # native portrait 1200x1600 -> landscape 1600x1200
+    update_interval: never
+    lambda: |-
+      const Color BLACK(0, 0, 0);
+      const Color WHITE(255, 255, 255);
+      const Color RED(255, 0, 0);
+      const Color BLUE(0, 0, 255);
+      const Color GREEN(0, 255, 0);
+      const Color YELLOW(255, 255, 0);
+      it.fill(WHITE);   // REQUIRED: buffer is not white by default
+      it.print(80, 120, id(font_big), BLACK, "Hello Spectra 6!");
+      it.filled_rectangle(80,  480, 160, 120, BLACK);
+      it.filled_rectangle(260, 480, 160, 120, RED);
+      it.filled_rectangle(440, 480, 160, 120, BLUE);
+      it.filled_rectangle(620, 480, 160, 120, GREEN);
+      it.filled_rectangle(800, 480, 160, 120, YELLOW);
+
+# Optional: physical user buttons (verified from the EE02 schematic).
+binary_sensor:
+  - platform: gpio
+    name: "EE02 Button 1"
+    pin: { number: GPIO2, mode: { input: true, pullup: true }, inverted: true }
+    on_press:
+      then:
+        - component.update: epd
